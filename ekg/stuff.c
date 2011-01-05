@@ -83,7 +83,6 @@
 #include "xmalloc.h"
 #include "plugins.h"
 #include "sessions.h"
-#include "recode.h"
 
 #include "dynstuff_inline.h"
 #include "queries.h"
@@ -1662,10 +1661,6 @@ char *read_file(FILE *f, int alloc) {
 	}
 
 	return (alloc) ? xstrdup(res) : res;
-}
-
-char *read_file_utf(FILE *f, int alloc) {
-	return read_file(f, alloc);
 }
 
 /**
