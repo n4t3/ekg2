@@ -28,6 +28,9 @@ int ekg_converters_display(int quiet);
 #define ekg_locale_to_cp_dup ekg_utf8_to_cp_dup
 #define ekg_locale_to_cp ekg_utf8_to_cp
 
+#define ekg_ucs2_to_locale ekg_ucs2_to_utf8
+#define ekg_locale_to_ucs2_dup ekg_utf8_to_ucs2_dup
+
 const char *ekg_utf8_to_iso2_const(const char *buf);
 char *ekg_iso2_to_utf8(char *buf);
 
@@ -36,6 +39,9 @@ char *ekg_cp_to_utf8_dup(const char *buf);
 char *ekg_utf8_to_cp(char *buf);
 char *ekg_utf8_to_cp_dup(const char *buf);
 const char *ekg_utf8_to_cp_const(const char *buf);
+
+string_t ekg_utf8_to_ucs2_dup(const char *b);
+char *ekg_ucs2_to_utf8(char *buf, int n);
 
 #ifdef __cplusplus
 }

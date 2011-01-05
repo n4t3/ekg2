@@ -1769,8 +1769,6 @@ EXPORT int icq_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("icq");
 
-	icq_convert_string_init();
-
 	icq_plugin.params	= icq_plugin_vars;
 	icq_plugin.priv		= &icq_priv;
 
@@ -1826,7 +1824,6 @@ EXPORT int icq_plugin_init(int prio) {
 }
 
 static int icq_plugin_destroy() {
-	icq_convert_string_destroy();
 	plugin_unregister(&icq_plugin);
 	return 0;
 }

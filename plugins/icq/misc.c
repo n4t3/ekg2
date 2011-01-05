@@ -22,24 +22,18 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef HAVE_ICONV
-#	include <iconv.h>
-#endif
 
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/dynstuff_inline.h>
 #include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
-
+#include <ekg/recode.h>
 #include <ekg/userlist.h>
 
 #include "icq.h"
 #include "icq_snac_handlers.h"
 #include "misc.h"
-
-void *ucs2be_conv_in = (void*) -1;
-void *ucs2be_conv_out = (void*) -1;
 
 void icq_hexdump(int level, unsigned char *p, size_t len) {
 	#define MAX_BYTES_PER_LINE 16
@@ -623,59 +617,12 @@ void icq_pack_append_client_identification(string_t pkt) {
 	icq_pack_append(pkt, "T",  icq_pack_tlv_str(0x0e, CLIENT_COUNTRY));		// TLV(0x0E) - client country (2 symbols)
 }
 
-void icq_convert_string_init() {
-	ucs2be_conv_in = ekg_convert_string_init("UCS-2BE", NULL, &ucs2be_conv_out);
-}
-
-void icq_convert_string_destroy() {
-	if (ucs2be_conv_in != (void*) -1) {
-		ekg_convert_string_destroy(ucs2be_conv_in);
-		ekg_convert_string_destroy(ucs2be_conv_out);
-	}
-}
-
 char *icq_convert_from_ucs2be(char *buf, int len) {
-#ifdef HAVE_ICONV
-	char *ret, *ib, *ob;
-	size_t ibl, obl;
-	string_t text;
-
-	if (!buf || !len)
-		return NULL;
-
-	text = string_init(NULL);
-	string_append_raw(text, (char *) buf, len);
-
-	ib = text->str, ibl = len;
-	obl = 16 * ibl;
-	ob = ret = xmalloc(obl + 1);
-
-	iconv (ucs2be_conv_in, &ib, &ibl, &ob, &obl);
-
-	string_free(text, 1);
-
-	if (!ibl) {
-		*ob = '\0';
-		ret = (char*)xrealloc((void*)ret, xstrlen(ret)+1);
-		return ret;
-	}
-	xfree(ret);
-#endif
-	return NULL;
+	return ekg_ucs2_to_locale(buf, len);
 }
 
-string_t icq_convert_to_ucs2be(char *text) {
-	string_t ret, s;
-
-	if (!text || !*text)
-		return NULL;
-
-	s = string_init(text);
-	ret = ekg_convert_string_t_p(s, ucs2be_conv_out);
-	/* XXX, ret == NULL */
-	string_free(s, 1);
-
-	return ret;
+string_t icq_convert_to_ucs2be(char *text) { 
+	return ekg_locale_to_ucs2_dup(text);
 }
 
 void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, private_data_t *data, snac_subhandler_t subhandler, char *format, ...) {

@@ -633,3 +633,74 @@ char *ekg_cp_to_utf8(char *buf) {
 	return ret;
 }
 
+/* ucs2be_wctomb (conv_t conv, unsigned char *r, ucs4_t wc, int n) */
+string_t ekg_utf8_to_ucs2_dup(const char *b) {
+	unsigned char *buf = (unsigned char *) b;
+	string_t str;
+	int len, i;
+
+	if (!buf)
+		return NULL;
+
+	str = string_init(NULL);
+
+	len = strlen(b);
+
+	for (i = 0; i < len;) {
+		unsigned short wc;
+		unsigned char r[2];
+
+		i += ekg_utf8_helper(&buf[i], len - i, &wc);
+
+		if (/* wc < 0x10000 && */ !(wc >= 0xd800 && wc < 0xe000)) 
+			wc = RECHAR;
+		
+		r[0] = (unsigned char) (wc >> 8);
+		r[1] = (unsigned char) wc;
+		string_append_raw(str, (const char *) r, sizeof(r));
+	}
+	/* XXX, NUL? */
+	return str;
+}
+
+/* static int ucs2be_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n) */
+// XXX, size_t n
+char *ekg_ucs2_to_utf8(char *b, int n) {
+	unsigned char *buf = (unsigned char *) b;
+	char *newbuf;
+	int newlen = 0;
+	int i, j;
+
+	for (i = 0; i < n; i += 2) {
+		unsigned short znak = (buf[i] >= 0xd8 && buf[i] < 0xe0) ? RECHAR : (buf[i] << 8) + buf[i+1];
+
+		if (znak < 0x80)	newlen += 1;
+		else if (znak < 0x800)	newlen += 2;
+		else			newlen += 3;
+	}
+	if (n & 1)
+		newlen++;
+
+	newbuf = xmalloc(newlen+1);
+
+	for (i = 0, j = 0; i < n; i += 2) {
+		unsigned short znak = (buf[i] >= 0xd8 && buf[i] < 0xe0) ? RECHAR : (buf[i] << 8) + buf[i+1];
+		int count;
+
+		if (znak < 0x80)	count = 1;
+		else if (znak < 0x800)	count = 2;
+		else			count = 3;
+
+		switch (count) {
+			case 3: newbuf[j+2] = 0x80 | (znak & 0x3f); znak = znak >> 6; znak |= 0x800;
+			case 2: newbuf[j+1] = 0x80 | (znak & 0x3f); znak = znak >> 6; znak |= 0xc0;
+			case 1: newbuf[j] = znak;
+		}
+		j += count;
+	}
+	if (n & 1)
+		newbuf[j++] = '?'; // XXX RECHAR.
+	newbuf[j] = '\0';
+	return newbuf;
+}
+
