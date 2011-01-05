@@ -115,9 +115,6 @@ static QUERY(jabber_session_init) {
 	j->fd = -1;
 	j->istlen = (tolower(s->uid[0]) == 't');	/* mark if this is tlen protocol */
 
-	if (j->istlen)
-		ekg_recode_iso2_inc();
-
 #ifdef JABBER_HAVE_GNUTLS
 	gnutls_certificate_allocate_credentials(&(j->xcred));
 	/* XXX - ~/.ekg/certs/server.pem */
@@ -157,9 +154,6 @@ static QUERY(jabber_session_deinit) {
 #ifdef JABBER_HAVE_GNUTLS
 	gnutls_certificate_free_credentials(j->xcred);
 #endif
-	if (j->istlen)
-		ekg_recode_iso2_dec();
-
 	xfree(j->server);
 	xfree(j->resource);
 	xfree(j->last_gmail_result_time);
