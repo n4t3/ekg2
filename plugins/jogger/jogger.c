@@ -35,15 +35,11 @@ int jogger_plugin_init(int prio);
 static int jogger_plugin_destroy(void);
 
 	/* messages.c */
-void jogger_localize_texts();
-void jogger_free_texts(int real_free);
 QUERY(jogger_msghandler);
 COMMAND(jogger_msg);
 COMMAND(jogger_subscribe);
 
 	/* drafts.c */
-void jogger_localize_headers();
-void jogger_free_headers(int real_free);
 COMMAND(jogger_prepare);
 COMMAND(jogger_publish);
 
@@ -197,12 +193,6 @@ static QUERY(jogger_newsession) {
 static QUERY(jogger_postconfig) {
 	session_t *js;
 
-	/* note: converters init only one-side converting (utf-8 ==> locale) recoders can't do it ;/ */
-	ekg_recode_utf8_inc();
-	jogger_localize_texts();
-	jogger_localize_headers();
-	ekg_recode_utf8_dec();
-
 	for (js = sessions; js; js = js->next) {
 		if ((js->plugin == &jogger_plugin) && !session_int_get(js, "userlist_keep"))
 			userlist_free(js);
@@ -299,8 +289,6 @@ int jogger_plugin_init(int prio) {
 #undef JOGGER_CMDFLAGS_TARGET
 #undef JOGGER_CMDFLAGS
 
-	jogger_free_texts(0); /* set NULLs */
-
 	plugin_register(&jogger_plugin, prio);
 
 	return 0;
@@ -309,8 +297,5 @@ int jogger_plugin_init(int prio) {
 static int jogger_plugin_destroy(void) {
 	plugin_unregister(&jogger_plugin);
 	
-	jogger_free_texts(1);
-	jogger_free_headers(1);
-
 	return 0;
 }

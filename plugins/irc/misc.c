@@ -142,7 +142,7 @@ static char *irc_convert_in(irc_private_t *j, const char *line) {
 
 	/* convert from unicode */
 	if ( !recoded && is_utf8_string(line) ) /* XXX add variable here? */
-		recoded = ekg_utf8_to_locale_dup(line);
+		recoded = xstrdup(line);
 
 	return recoded;
 }

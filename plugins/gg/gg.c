@@ -1724,7 +1724,6 @@ int EXPORT gg_plugin_init(int prio) {
 
 	plugin_register(&gg_plugin, prio);
 
-	ekg_recode_utf8_inc();
 	ekg_recode_cp_inc();
 
 	gg_setvar_default(NULL, dummy);
@@ -1800,7 +1799,6 @@ static int gg_plugin_destroy() {
 
 	image_flush_queue();
 
-	ekg_recode_utf8_dec();
 	ekg_recode_cp_dec();
 
 	plugin_unregister(&gg_plugin);

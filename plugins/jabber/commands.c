@@ -274,8 +274,6 @@ static COMMAND(jabber_command_msg)
 
 	int secure		= 0;
 
-	const char *msg2;		/* used for transcoding */
-
 	if (!xstrcmp(target, "*")) {
 		if (msg_all(session, name, params[1]) == -1)
 			printq("list_empty");
@@ -320,9 +318,7 @@ static COMMAND(jabber_command_msg)
 		ismuc = 1;
 
 	if (!j->istlen) { /* Very, very simple XEP-0071 support + 'modified' jabber_encode() */
-		msg2 = ekg_locale_to_utf8_use(msg);
-
-		if ((htmlmsg = xstrchr(msg2, 18))) { /* ^R */
+		if ((htmlmsg = xstrchr(msg, 18))) { /* ^R */
 			int omitsyntaxcheck;
 
 			*(htmlmsg++) = 0;
@@ -355,8 +351,7 @@ static COMMAND(jabber_command_msg)
 					return -1;
 			}
 		}
-	} else
-		msg2 = msg;
+	}
 
 /* writing: */
 	if (j->send_watch) j->send_watch->transfer_limit = -1;
@@ -378,10 +373,10 @@ static COMMAND(jabber_command_msg)
 		xfree(thread);
 	}
 
-	if (!msg2) goto nomsg;
+	if (!msg) goto nomsg;
 
 	if (session_int_get(session, "__gpg_enabled") == 1) {
-		char *e_msg = xstrdup(msg2);
+		char *e_msg = xstrdup(msg);
 
 		if ((e_msg = jabber_openpgp(session, uid, JABBER_OPENGPG_ENCRYPT, e_msg, NULL, NULL))) {
 			watch_write(j->send_watch, 
@@ -392,13 +387,11 @@ static COMMAND(jabber_command_msg)
 		}
 	}
 	if (!secure /* || j->istlen */) {
-		char *tmp = (j->istlen ? tlen_encode(msg2) : xml_escape(msg2));
+		char *tmp = (j->istlen ? tlen_encode(msg) : xml_escape(msg));
 
 		watch_write(j->send_watch, "<body>%s</body>", tmp);
 		xfree(tmp);
 	}
-	if (!j->istlen)
-		recode_xfree(msg, msg2);			/* recoded string */
 
 	if (config_last & 4) 
 		last_add(1, uid, time(NULL), 0, params[1]);

@@ -41,7 +41,7 @@
 #define JOGGER_VALUES_MAX 14
 
 	/* 10 char-long don't use ':', because they're already on limit (longer ones are discarded) */
-const char *utf_jogger_header_keys[JOGGER_KEYS_MAX] = {
+static const char *jogger_header_keys[JOGGER_KEYS_MAX] = {
 	"tytul:",	"temat:",	"subject:",	"tytuł:",		NULL,
 	"poziom:",	"level:",						NULL, /* 2 */
 	"tag:",									NULL, /* 3 */
@@ -53,42 +53,13 @@ const char *utf_jogger_header_keys[JOGGER_KEYS_MAX] = {
 	NULL
 };
 
-const char *utf_jogger_header_values[JOGGER_VALUES_MAX] = {
+static const char *jogger_header_values[JOGGER_VALUES_MAX] = {
 	"off",		"no",		"nie",		"wylacz",	"wyłącz",
 	"on",		"yes",		"tak",		"wlacz",	"włącz",	NULL,
 
 	"jogger",									NULL,
 	NULL
 };
-
-char *jogger_header_keys[JOGGER_KEYS_MAX];
-char *jogger_header_values[JOGGER_VALUES_MAX];
-
-void jogger_free_headers(int real_free) {
-	int i;
-
-	for (i = 0; i < JOGGER_KEYS_MAX; i++) {
-		if (real_free)
-			xfree(jogger_header_keys[i]);
-		jogger_header_keys[i] = NULL;
-	}
-	for (i = 0; i < JOGGER_VALUES_MAX; i++) {
-		if (real_free)
-			xfree(jogger_header_values[i]);
-		jogger_header_values[i] = NULL;
-	}
-}
-
-void jogger_localize_headers() {
-	int i;
-
-	jogger_free_headers(1);
-	for (i = 0; i < JOGGER_KEYS_MAX; i++)
-		jogger_header_keys[i] = ekg_utf8_to_locale_dup(utf_jogger_header_keys[i]);
-
-	for (i = 0; i < JOGGER_VALUES_MAX; i++)
-		jogger_header_values[i] = ekg_utf8_to_locale_dup(utf_jogger_header_values[i]);
-}
 
 /**
  * jogger_checkoutfile()

@@ -361,8 +361,6 @@ static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
 
 /* EKG2 STUFF */
 
-extern char *config_console_charset;							/* ekg/stuff.h */
-
 /**
  * base16_encode()
  *
@@ -398,19 +396,11 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 	EKG2_MD5_CTX ctx;
 	unsigned char digest[20];
 
-	const char *convnode, *convpasswd;	/* sid && password encoded in UTF-8 */
 	char *ha1, *ha2;
 	char *kd;
 
-/* ZERO STEP -> recode */
-	convnode = ekg_locale_to_utf8_use(sid);
-	convpasswd = ekg_locale_to_utf8_use(password);
-
 /* FIRST STEP */
-	kd = saprintf("%s:%s:%s", convnode, realm, convpasswd);
-
-	recode_xfree(sid, convnode);
-	recode_xfree(password, convpasswd);
+	kd = saprintf("%s:%s:%s", sid, realm, password);
 
 	MD5Init(&ctx);
 	MD5Update(&ctx, kd, xstrlen(kd));
@@ -508,11 +498,11 @@ char *jabber_digest(const char *sid, const char *password, int istlen) {
 
 	SHA1Init(&ctx);
 
-	tmp = (istlen) ? ekg_locale_to_iso2_use(sid) : ekg_locale_to_utf8_use(sid);
+	tmp = (istlen) ? ekg_locale_to_iso2_use(sid) : sid;
 	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	recode_xfree(sid, tmp);
 
-	tmp = (istlen) ? ekg_locale_to_iso2_use(password) : ekg_locale_to_utf8_use(password);
+	tmp = (istlen) ? ekg_locale_to_iso2_use(password) : password;
 	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	recode_xfree(password, tmp);
 

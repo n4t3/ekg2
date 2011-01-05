@@ -89,7 +89,7 @@ static void set_userinfo_from_tlv(userlist_t *u, const char *var, icq_tlv_t *t) 
 	if (!u)
 		return;
 
-	tmp = (t && t->len) ? ekg_utf8_to_locale(xstrndup((char *) t->buf, t->len)) : NULL;
+	tmp = (t && t->len) ? xstrndup((char *) t->buf, t->len) : NULL;
 
 	user_private_item_set(u, var, tmp);
 }
@@ -101,12 +101,11 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 			icq_tlv_t *t_nick = icq_tlv_get(tlvs, 0x131);
 			icq_tlv_t *t_auth = icq_tlv_get(tlvs, 0x66);
 
-			char *nick, *tmp;
+			char *nick;
 			char *uid = icq_uid(name);
 			userlist_t *u;
 
-			tmp = (t_nick && t_nick->len) ? xstrndup((char *) t_nick->buf, t_nick->len) : xstrdup(uid);
-			nick = ekg_utf8_to_locale(tmp);
+			nick = (t_nick && t_nick->len) ? xstrndup((char *) t_nick->buf, t_nick->len) : xstrdup(uid);
 
 			if (!(u = userlist_find(s, uid)) && !(u = userlist_add(s, uid, nick)) ) {
 				debug_error("icq_userlist_parse_entry() userlist_add(%s, %s) failed!\n", uid, nick);
@@ -317,14 +316,13 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 	buf = pkt.data;
 
 	for (i = 0; i < pkt.count; i++) {
-		char *orgname;
 		uint16_t item_id, item_type;
 		uint16_t group_id;
 		uint16_t tlv_len;
 		struct icq_tlv_list *tlvs;
 		char *name;
 
-		if (!ICQ_UNPACK(&buf, "UWWWW", &orgname, &group_id, &item_id, &item_type, &tlv_len))
+		if (!ICQ_UNPACK(&buf, "UWWWW", &name, &group_id, &item_id, &item_type, &tlv_len))
 			return -1;
 
 		if (len < tlv_len) {
@@ -332,14 +330,11 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 			return -1;
 		}
 
-		name = ekg_utf8_to_locale_dup(orgname);
 		debug_white("%sName:'%s'\tgroup:%u item:%u type:0x%x tlvLEN:%u\n", item_type==1?"Group ":"", name, group_id, item_id, item_type, tlv_len);
 
 		tlvs = icq_unpack_tlvs_nc(buf, tlv_len, 0);
 		icq_userlist_parse_entry(s, tlvs, name, item_type, item_id, group_id);
 		icq_tlvs_destroy(&tlvs);
-
-		xfree(name);
 
 		buf += tlv_len; len -= tlv_len;
 

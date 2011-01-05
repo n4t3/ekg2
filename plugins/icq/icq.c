@@ -113,7 +113,7 @@ int icq_write_status_msg(session_t *s) {
 	if (j->aim == 0)
 		return -1;
 
-	msg = ekg_locale_to_utf8(xstrndup(s->descr, 0x1000));
+	msg = xstrndup(s->descr, 0x1000);
 
 	/* XXX, cookie */
 
@@ -1138,9 +1138,7 @@ static void icq_send_msg_ch2(session_t *session, const char *uid, const char *me
 	t2711 = string_init(NULL);
 {
 		icq_pack_append_rendezvous(t2711, ICQ_VERSION, cookie, MTYPE_PLAIN, 0, 1, prio);
-		char *recode = ekg_locale_to_utf8_dup(message);
-		icq_pack_append_nullterm_msg(t2711, recode);
-		xfree(recode);
+		icq_pack_append_nullterm_msg(t2711, message);
 		icq_pack_append(t2711, "II", 0, 0xffffffff);	// XXX text & background colors
 		icq_pack_append(t2711, "i", xstrlen(CAP_UTF8_str));
 		string_append(t2711, CAP_UTF8_str);
@@ -1772,7 +1770,6 @@ EXPORT int icq_plugin_init(int prio) {
 	PLUGIN_CHECK_VER("icq");
 
 	icq_convert_string_init();
-	ekg_recode_utf8_inc();
 
 	icq_plugin.params	= icq_plugin_vars;
 	icq_plugin.priv		= &icq_priv;
@@ -1831,6 +1828,5 @@ EXPORT int icq_plugin_init(int prio) {
 static int icq_plugin_destroy() {
 	icq_convert_string_destroy();
 	plugin_unregister(&icq_plugin);
-	ekg_recode_utf8_dec();
 	return 0;
 }

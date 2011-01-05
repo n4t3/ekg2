@@ -1186,7 +1186,7 @@ SNIFF_HANDLER(sniff_gg_new_status80_real, gg_new_status80_real) {
 		tcp_print_payload((u_char *) pkt->data, len);
 	}
 
-	descr	= has_descr ? ekg_utf8_to_locale(xstrndup(pkt->data, len)) : NULL;
+	descr	= has_descr ? xstrndup(pkt->data, len) : NULL;
 	sniff_gg_print_new_status(s, hdr, 0, status, descr);
 	xfree(descr);
 	return 0;
@@ -1237,7 +1237,7 @@ SNIFF_HANDLER(sniff_gg_notify_reply80_real, gg_notify_reply80_real) {
 		next += pkt->descr_len;
 	}
 
-	descr = has_descr ? ekg_utf8_to_locale(xstrndup(pkt->next, pkt->descr_len)) : NULL;
+	descr = has_descr ? xstrndup(pkt->next, pkt->descr_len) : NULL;
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
@@ -1303,7 +1303,7 @@ SNIFF_HANDLER(sniff_gg_status80_real, gg_status80_real) {
 		tcp_print_payload((u_char *) pkt->descr, len);
 	}
 
-	descr 	= has_descr ? ekg_utf8_to_locale(xstrndup(pkt->descr, len)) : NULL;
+	descr 	= has_descr ? xstrndup(pkt->descr, len) : NULL;
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 

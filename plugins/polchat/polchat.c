@@ -187,10 +187,8 @@ static watch_t *polchat_sendpkt(session_t *s, short headercode, ...)  {
 
 	va_start(ap, headercode);
 	while ((tmp = va_arg(ap, char *))) {
-		char *r = ekg_locale_to_utf8_dup(tmp);
-
-		array_add(&arr, r);
-		size += strlen(r) + 3;
+		array_add(&arr, tmp);
+		size += strlen(tmp) + 3;
 	}
 	va_end(ap);
 
@@ -209,7 +207,7 @@ static watch_t *polchat_sendpkt(session_t *s, short headercode, ...)  {
 			string_append_n(w->buf, arr[i], len);		/* str */
 			string_append_c(w->buf, '\0');			/* NUL */
 		}
-		array_free(arr);
+		xfree(arr);
 	}
 	
 	w->data = (void *) (long int) w->buf->len;
@@ -702,7 +700,6 @@ EXPORT int polchat_plugin_init(int prio) {
 	polchat_plugin.params = polchat_plugin_vars;
 
 	plugin_register(&polchat_plugin, prio);
-	ekg_recode_utf8_inc();
 
 	query_connect_id(&polchat_plugin, PROTOCOL_VALIDATE_UID, polchat_validate_uid, NULL);
 	query_connect_id(&polchat_plugin, SESSION_ADDED, polchat_session_init, NULL);
@@ -748,7 +745,6 @@ EXPORT int polchat_plugin_init(int prio) {
 
 static int polchat_plugin_destroy() {
 	plugin_unregister(&polchat_plugin);
-	ekg_recode_utf8_dec();
 	return 0;
 }
 

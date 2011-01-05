@@ -234,9 +234,7 @@ static void icq_send_status_descr(session_t *s, int msg_type, msg_params_t *msg_
 	desc = xstrdup(s->descr);
 	icq_pack_append_msg_header(pkt, msg_param);
 	icq_pack_append_rendezvous(pkt, msg_param->version, msg_param->cookie, msg_type, MFLAG_AUTO, 0, 0);
-	if (msg_param->version == 9) /* unicode */
-		desc = ekg_locale_to_utf8(desc);
-	else {
+	if (msg_param->version != 9) { /* not unicode */
 		/* XXX recode? */
 	}
 	icq_pack_append_nullterm_msg(pkt, desc);
@@ -329,11 +327,8 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 					len -= msg.len;
 					if (msg.len > 0) {
 						time_t sent = time(NULL);
-						char *tmp = ekg_utf8_to_locale_dup(msg.str);
 
-						protocol_message_emit(s, msg_param->uid, NULL, tmp, NULL, sent, EKG_MSGCLASS_CHAT, NULL, EKG_TRY_BEEP, 0);
-
-						xfree(tmp);
+						protocol_message_emit(s, msg_param->uid, NULL, msg.str, NULL, sent, EKG_MSGCLASS_CHAT, NULL, EKG_TRY_BEEP, 0);
 					}
 					icq_send_adv_msg_ack(s, msg_param);
 					break;
@@ -541,8 +536,6 @@ SNAC_SUBHANDLER(icq_snac_message_server_ack) {
 }
 
 static void icq_snac_message_status_reply(msg_params_t *msg_param, char *msg) {
-	char *descr;
-
 	if (!msg_param->u) {
 		debug_warn("icq_snac_message_status_reply() Ignoring status description from unknown %s msg: %s\n", msg_param->uid, msg);
 		return;
@@ -550,15 +543,8 @@ static void icq_snac_message_status_reply(msg_params_t *msg_param, char *msg) {
 
 	debug_function("icq_snac_message_status_reply() status from %s msg: %s\n", msg_param->uid, msg);
 
-	if (msg_param->version == 9) /* utf-8 message */
-		descr = ekg_utf8_to_locale_dup(msg);
-	else
-		descr = xstrdup(msg);
-
 	/* We change only description, not status */
-	protocol_status_emit(msg_param->s, msg_param->uid, msg_param->u->status, descr, time(NULL));
-
-	xfree(descr);
+	protocol_status_emit(msg_param->s, msg_param->uid, msg_param->u->status, msg, time(NULL));
 }
 
 SNAC_SUBHANDLER(icq_snac_message_response) {

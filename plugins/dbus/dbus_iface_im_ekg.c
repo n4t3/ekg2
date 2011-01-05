@@ -18,7 +18,7 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_ekg2_getSessions)
 #define __FUNCTION__ "ekg2_dbus_iface_im_ekg2_getSessions"
 	EKG2_DBUS_CALL_HANDLER_VARIABLES;
 	session_t *sl;
-	char x[1] = "", *tmp_descr, *tmp;
+	char x[1] = "", *tmp;
 
 	EKG2_DBUS_INIT_REPLY;
 
@@ -37,9 +37,7 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_ekg2_getSessions)
 		/* XXX convert to utf before sending, d-bus sux? XXX */
 		tmp = (char *)session_descr_get(s);
 		tmp = xstrdup(tmp?tmp:"");
-		tmp_descr = ekg_convert_string (tmp, NULL, "utf-8");
-		EKG2_DBUS_ADD_STRING(tmp_descr ? &tmp_descr : &tmp);
-		xfree(tmp_descr);
+		EKG2_DBUS_ADD_STRING(tmp);
 		xfree(tmp);
 	}
 	EKG2_DBUS_SEND_REPLY;

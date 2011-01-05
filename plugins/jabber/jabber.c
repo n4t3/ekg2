@@ -115,9 +115,7 @@ static QUERY(jabber_session_init) {
 	j->fd = -1;
 	j->istlen = (tolower(s->uid[0]) == 't');	/* mark if this is tlen protocol */
 
-	if (!j->istlen)
-		ekg_recode_utf8_inc();
-	else
+	if (j->istlen)
 		ekg_recode_iso2_inc();
 
 #ifdef JABBER_HAVE_GNUTLS
@@ -159,9 +157,7 @@ static QUERY(jabber_session_deinit) {
 #ifdef JABBER_HAVE_GNUTLS
 	gnutls_certificate_free_credentials(j->xcred);
 #endif
-	if (!j->istlen)
-		ekg_recode_utf8_dec();
-	else
+	if (j->istlen)
 		ekg_recode_iso2_dec();
 
 	xfree(j->server);

@@ -188,8 +188,6 @@ static QUERY(irc_session_init) {
 
 	userlist_read(s);
 
-	ekg_recode_utf8_inc();
-
 	j = xmalloc(sizeof(irc_private_t));
 	j->nick_modes = j->nick_signs = NULL;
 	j->fd = -1;

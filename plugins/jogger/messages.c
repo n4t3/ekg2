@@ -34,7 +34,7 @@
 	/* jogger.c */
 session_t *jogger_session_find_uid(session_t *s, const char *uid);
 
-const char *utf_jogger_text[JOGGER_TEXT_MAX] = {
+static const char *jogger_text[JOGGER_TEXT_MAX] = {
 	"Do Twojego joggera został dodany komentarz",		/* [0] url (#eid[ / Texti*])\n----------------\n */
 	"Pojawił się nowy komentarz do wpisu",			/* [1] as above */
 
@@ -54,26 +54,6 @@ const char *utf_jogger_text[JOGGER_TEXT_MAX] = {
 	"Do śledzonego joggera został dodany nowy wpis:",	/* [12] url (#eid[ / Texti*]) */
 	"Brak uprawnień do komentowania tego wpisu!"		/* [13] */
 };
-
-char *jogger_text[JOGGER_TEXT_MAX];
-
-void jogger_free_texts(int real_free) {
-	int i;
-
-	for (i = 0; i < JOGGER_TEXT_MAX; i++) {
-		if (real_free)
-			xfree(jogger_text[i]);
-		jogger_text[i] = NULL;
-	}
-}
-
-void jogger_localize_texts() {
-	int i;
-
-	jogger_free_texts(1);
-	for (i = 0; i < JOGGER_TEXT_MAX; i++)
-		jogger_text[i] = ekg_utf8_to_locale_dup(utf_jogger_text[i]);
-}
 
 QUERY(jogger_msghandler) {
 	const char *suid	= *(va_arg(ap, const char **));

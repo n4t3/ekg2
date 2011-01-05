@@ -204,17 +204,11 @@ char *jabber_attr(char **atts, const char *att)
  * @return Dynamic allocated string, which should be xfree()'d
  */
 
-char *jabber_escape(const char *text) {
-	const char *utftext;
-	char *res;
-
-	if (!text)
+char *jabber_escape(const char *utftext) {
+	if (!utftext)
 		return NULL;
 
-	utftext = ekg_locale_to_utf8_use(text);
-	res = xml_escape(utftext);
-	recode_xfree(text, utftext);
-	return res;
+	return xml_escape(utftext);
 }
 
 /**
@@ -232,10 +226,11 @@ char *jabber_escape(const char *text) {
  * @return Dynamic allocated string, which should be xfree()'d
  */
 
+/* XXX!!!!!!!! */
 char *jabber_unescape(const char *text) {
 	if (!text)
 		return NULL;
-	return ekg_utf8_to_locale_dup(text);
+	return xstrdup(text);
 }
 
 /**

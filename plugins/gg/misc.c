@@ -258,30 +258,31 @@ int gg_userlist_send(struct gg_session *s, userlist_t *userlist) {
  *
  * starting from protocol version 0x2e, GG handles unicode
  *
+ * XXX fix, it depends on p.encoding not protocol version!!
  */
 char *gg_to_locale(session_t *s, char *txt) {
 	gg_private_t *g = session_private_get(s);
-	return (g->curr_prtcl_ver >= 0x2e) ? ekg_utf8_to_locale(txt) : ekg_cp_to_locale(txt);
+	return (g->curr_prtcl_ver >= 0x2e) ? txt : ekg_cp_to_locale(txt);
 }
 
 char *gg_to_locale_dup(session_t *s, const char *txt) {
 	gg_private_t *g = session_private_get(s);
-	return (g->curr_prtcl_ver >= 0x2e) ? ekg_utf8_to_locale_dup(txt) : ekg_cp_to_locale_dup(txt);
+	return (g->curr_prtcl_ver >= 0x2e) ? xstrdup(txt) : ekg_cp_to_locale_dup(txt);
 }
 
 char *locale_to_gg(session_t *s, char *txt) {
 	gg_private_t *g = session_private_get(s);
-	return (g->curr_prtcl_ver >= 0x2e) ? ekg_locale_to_utf8(txt) : ekg_locale_to_cp(txt);
+	return (g->curr_prtcl_ver >= 0x2e) ? txt : ekg_locale_to_cp(txt);
 }
 
 char *locale_to_gg_dup(session_t *s, const char *txt) {
 	gg_private_t *g = session_private_get(s);
-	return (g->curr_prtcl_ver >= 0x2e) ? ekg_locale_to_utf8_dup(txt) : ekg_locale_to_cp_dup(txt);
+	return (g->curr_prtcl_ver >= 0x2e) ? xstrdup(txt) : ekg_locale_to_cp_dup(txt);
 }
 
 const char *locale_to_gg_use(session_t *s, const char *txt) {
 	gg_private_t *g = session_private_get(s);
-	return (g->curr_prtcl_ver >= 0x2e) ? ekg_locale_to_utf8_use(txt) : ekg_locale_to_cp_use(txt);
+	return (g->curr_prtcl_ver >= 0x2e) ? txt : ekg_locale_to_cp_use(txt);
 }
 
 /*

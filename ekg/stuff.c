@@ -1665,22 +1665,7 @@ char *read_file(FILE *f, int alloc) {
 }
 
 char *read_file_utf(FILE *f, int alloc) {
-	static char *tmp = NULL;
-	char *buf = read_file(f, 0);
-	char *res;
-
-	xfree(tmp);
-	tmp = NULL;
-	if (alloc == -1)
-		return NULL;
-
-	ekg_recode_utf8_inc();
-	res = ekg_utf8_to_locale_dup(buf);
-	if (!alloc)
-		tmp = res;
-
-	ekg_recode_utf8_dec();
-	return res;
+	return read_file(f, alloc);
 }
 
 /**
