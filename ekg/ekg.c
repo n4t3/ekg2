@@ -684,6 +684,7 @@ int main(int argc, char **argv)
 #ifdef ENABLE_NLS
 	bindtextdomain("ekg2",LOCALEDIR);
 	textdomain("ekg2");
+	bind_textdomain_codeset("ekg2", "UTF-8");
 #endif
 	srand(time(NULL));
 
