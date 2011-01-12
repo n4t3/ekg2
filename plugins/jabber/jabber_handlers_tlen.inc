@@ -34,7 +34,7 @@ JABBER_HANDLER(tlen_handle_notification) {	/* n->name: "m" TLEN only: typing, no
 		if (config_sound_notify_file)
 			play_sound(config_sound_notify_file);
 		else if (config_beep && config_beep_notify)
-			query_emit_id(NULL, UI_BEEP, NULL);
+			query_emit(NULL, "ui-beep", NULL);
 		xfree(uid);
 		return;
 	}

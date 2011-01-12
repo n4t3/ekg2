@@ -1087,7 +1087,7 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 	
 	printq("conferences_rename", oldname, newname);
 
-	query_emit_id(NULL, CONFERENCE_RENAMED, &oldname, &newname);	/* XXX READ-ONLY QUERY */
+	query_emit(NULL, "conference-renamed", &oldname, &newname);	/* XXX READ-ONLY QUERY */
 
 	return 0;
 }
@@ -1155,6 +1155,7 @@ help_again:
  *
  *  - name - nazwa.
  */
+/*
 int ekg_hash(const char *name)
 {
 	int hash = 0;
@@ -1165,7 +1166,21 @@ int ekg_hash(const char *name)
 	}
 
 	return hash;
+}*/
+/*
+ * new hash, made with queries in mind
+ * but should also nicely behave for formats
+ */
+int ekg_hash(const char *name) {
+	unsigned long long st = 0x4d6947;
+
+	for (; *name; name++) {
+		st = st * 2147483069 + 2147482417;
+		st ^= (*name);
+	}
+	return (int)st;
 }
+
 
 /*
  * mesg_set()
@@ -2348,7 +2363,7 @@ void ekg_update_status(session_t *session)
 			const char *__session	= session_uid_get(session);
 			const char *__uid		= u->uid;
 
-			query_emit_id(NULL, USERLIST_CHANGED, &__session, &__uid);
+			query_emit(NULL, "userlist-changed", &__session, &__uid);
 		}
 	}
 }
@@ -2596,7 +2611,8 @@ size_t strlen_pl(const char *s) {
 #endif
 }
 
-char *xstrncat_pl(char *dest, const char *src, size_t n) {
+int utf8str_char2bytes(const char *src, size_t n) {
+/* FIXME - stupid function name */
 #if USE_UNICODE
 	int len=xstrlen(src);
 	wchar_t *wc = xmalloc((len+1) * sizeof(wchar_t));
@@ -2605,6 +2621,13 @@ char *xstrncat_pl(char *dest, const char *src, size_t n) {
 	if (mbsrtowcs(wc, &p, n, NULL) < 0) n = 0;
 	else n = p ? p - src : len;
 	xfree(wc);
+#endif
+	return n;
+}
+
+char *xstrncat_pl(char *dest, const char *src, size_t n) {
+#if USE_UNICODE
+	n = utf8str_char2bytes(src, n);
 #endif
 	return xstrncat(dest, src, n);
 }
@@ -2802,7 +2825,7 @@ int ekg_close(int fd) {
 char *password_input(const char *prompt, const char *rprompt, const bool norepeat) {
 	char *pass = NULL;
 
-	if (query_emit_id(NULL, UI_PASSWORD_INPUT, &pass, &prompt, norepeat ? NULL : &rprompt) == -2) {
+	if (query_emit(NULL, "ui-password-input", &pass, &prompt, norepeat ? NULL : &rprompt) == -2) {
 		print("password_nosupport");
 		return NULL;
 	}

@@ -23,11 +23,17 @@
 #include <ekg/xmalloc.h>
 #include <ekg/stuff.h>
 
-#include "old.h"
+#include "nc-stuff.h"
 #include "spell.h"
 
 
 #ifdef WITH_ASPELL
+
+/* vars */
+
+int config_aspell;
+char *config_aspell_lang;
+
 AspellSpeller *spell_checker = NULL;
 static AspellConfig  *spell_config  = NULL;
 

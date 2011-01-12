@@ -765,10 +765,10 @@ EXPORT int sniff_plugin_init(int prio) {
 	sniff_plugin.params = sniff_plugin_vars;
 	plugin_register(&sniff_plugin, prio);
 
-	query_connect_id(&sniff_plugin, PROTOCOL_VALIDATE_UID,	sniff_validate_uid, NULL);
-	query_connect_id(&sniff_plugin, STATUS_SHOW,		sniff_status_show, NULL);
-	query_connect_id(&sniff_plugin, PLUGIN_PRINT_VERSION,	sniff_print_version, NULL);
-	query_connect_id(&sniff_plugin, SESSION_REMOVED,	sniff_session_deinit, NULL);
+	query_connect(&sniff_plugin, "protocol-validate-uid",	sniff_validate_uid, NULL);
+	query_connect(&sniff_plugin, "status-show",		sniff_status_show, NULL);
+	query_connect(&sniff_plugin, "plugin-print-version",	sniff_print_version, NULL);
+	query_connect(&sniff_plugin, "session-removed",	sniff_session_deinit, NULL);
 
 	command_add(&sniff_plugin, "sniff:connect", NULL, sniff_command_connect,    SESSION_MUSTBELONG, NULL);
 	command_add(&sniff_plugin, "sniff:connections", NULL, sniff_command_connections, SESSION_MUSTBELONG | SESSION_MUSTBECONNECTED, NULL);

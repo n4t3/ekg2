@@ -33,10 +33,12 @@
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
-#include "old.h"
+#include "nc-stuff.h"
 #include "bindings.h"
 #include "contacts.h"
+#include "input.h"
 #include "mouse.h"
+#include "statusbar.h"
 
 	/* imported bindings */
 BINDING_FUNCTION(binding_previous_only_history);
@@ -91,7 +93,7 @@ static void ncurses_mouse_move_handler(int x, int y)
  * handler for mouse events in lastlog window
  */
 void ncurses_lastlog_mouse_handler(int x, int y, int mouse_state) {
-	window_t *w = window_find_sa(NULL, "__lastlog", 1);
+	window_t *w = window_exist(WINDOW_LASTLOG_ID);
 
 	if (mouse_state == EKG_SCROLLED_UP) {
 		binding_helper_scroll(w, -1);

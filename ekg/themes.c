@@ -438,7 +438,7 @@ static char *va_format_string(const char *format, va_list ap) {
 
 				if (!str)
 					str = "";
-				len = xstrlen(str);
+				len = strlen_pl(str);
 
 				if (fill_length) {
 					if (len >= fill_length) {
@@ -459,7 +459,7 @@ static char *va_format_string(const char *format, va_list ap) {
 					for (i = 0; i < fill_length+center; i++)
 						string_append_c(buf, fill_char);
 
-				string_append_n(buf, str, len);
+				string_append_n(buf, str, utf8str_char2bytes(str, len));
 
 				if (fill_after)
 					for (i = 0; i < fill_length; i++)
@@ -528,7 +528,7 @@ fstring_t *fstring_new(const char *str) {
 	}
 
 	res			= xmalloc(sizeof(fstring_t));
-	res->str.b = tmpstr	= xmalloc((len + 1) * sizeof(char));
+	res->str = tmpstr	= xmalloc((len + 1) * sizeof(char));
 	res->attr		= xmalloc((len + 1) * sizeof(short));
 
 	res->margin_left = -1;
@@ -688,7 +688,7 @@ void fstring_free(fstring_t *str)
 	if (!str)
 		return;
 
-	xfree(str->str.b);
+	xfree(str->str);
 	xfree(str->attr);
 	xfree(str->priv_data);
 	xfree(str);
@@ -738,7 +738,7 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
 		if (activity > w->act) {
 			w->act = activity;
 				/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
-			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED, &w);
+			query_emit(NULL, "ui-window-act-changed", &w);
 		}
 	}
 
@@ -855,7 +855,7 @@ static window_t *print_window_find(const char *target, session_t *session, int s
 				w->target = xstrdup(target);
 				w->session = session;
 
-				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* XXX */
+				query_emit(NULL, "ui-window-target-changed", &w);	/* XXX */
 				break;
 			}
 			if (w)		/* wtf? */

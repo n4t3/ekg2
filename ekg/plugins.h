@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-#define EKG_ABI_VER 5032
+#define EKG_ABI_VER 5034
 
 #define EXPORT __attribute__ ((visibility("default")))
 
@@ -131,32 +131,29 @@ void plugins_unlink(plugin_t *pl);
 #define QUERY(x) int x(void *data, va_list ap)
 typedef QUERY(query_handler_func_t);
 
-typedef struct queryx {
-	struct queryx *next;
+/* must be power of 2 ;p */
+#define QUERIES_BUCKETS 64
 
-	int id;
-	plugin_t *plugin;
-	void *data;
-	query_handler_func_t *handler;
-	int count;
+typedef struct query_node {
+        struct query_node* next;
+        char *name;
+        int name_hash;
+        plugin_t *plugin;
+        void *data;
+        query_handler_func_t *handler;
+        int count;
 } query_t;
 
-#ifndef EKG2_WIN32_NOFUNCTION
-
+int query_register(const char *name, ...);
 query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
-query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data);
-int query_free(query_t *q);
-void query_external_free();
-
-int query_emit_id(plugin_t *, const int, ...);
 int query_emit(plugin_t *, const char *, ...);
+int query_free(query_t* g);
+
 void queries_reconnect();
 
-const char *query_name(const int id);
-const struct query_def *query_struct(const int id);
-int query_register_external(const char *name, ...);
+void queries_list_destroy(query_t** kk);
 
-#endif
+void registered_queries_free();
 
 typedef enum {
 	WATCH_NONE = 0,

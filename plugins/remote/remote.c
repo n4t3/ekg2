@@ -174,7 +174,7 @@ static char *rc_fstring_reverse(fstring_t *fstr) {
 		return NULL;
 
 	attr = fstr->attr;
-	str = fstr->str.b;
+	str = fstr->str;
 
 	if (!attr || !str)
 		return NULL;
@@ -1393,7 +1393,7 @@ static TIMER(remote_statusbar_timer) {
 	if (type)
 		return 0;
 
-	if (query_emit_id(NULL, MAIL_COUNT, &mail_count) != -2) {
+	if (query_emit(NULL, "mail-count", &mail_count) != -2) {
 		if (mail_count != rc_last_mail_count) {
 			rc_last_mail_count = mail_count;
 			remote_broadcast("MAILCOUNT", itoa(mail_count), NULL);
@@ -1407,7 +1407,7 @@ static TIMER(remote_statusbar_timer) {
 	r = window_current->priv_data;
 
 	irctopic = irctopicby = ircmode = NULL;
-	query_emit_id(NULL, IRC_TOPIC, &irctopic, &irctopicby, &ircmode);
+	query_emit(NULL, "irc-topic", &irctopic, &irctopicby, &ircmode);
 
 	if (xstrcmp(irctopic, r->last_irctopic)) {
 		xfree(r->last_irctopic);
@@ -1520,7 +1520,7 @@ EXPORT int remote_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("remote");
 
-	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	query_emit(NULL, "ui-is-initialized", &is_UI);
 
 	if (is_UI)
 		return -1;
@@ -1532,60 +1532,60 @@ EXPORT int remote_plugin_init(int prio) {
 	variable_add(&remote_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);
 	variable_add(&remote_plugin, ("password"), VAR_STR, 0, &rc_password, NULL, NULL, NULL);
 
-	query_connect_id(&remote_plugin, UI_IS_INITIALIZED, remote_ui_is_initialized, NULL);
-	query_connect_id(&remote_plugin, CONFIG_POSTINIT, remote_postinit, NULL);
+	query_connect(&remote_plugin, "ui-is-initialized", remote_ui_is_initialized, NULL);
+	query_connect(&remote_plugin, "config-postinit", remote_postinit, NULL);
 
-	query_connect_id(&remote_plugin, UI_WINDOW_SWITCH, remote_ui_window_switch, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_KILL, remote_ui_window_kill, NULL);
-	query_connect_id(&remote_plugin, UI_BEEP, remote_ui_beep, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_PRINT, remote_ui_window_print, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_CLEAR, remote_ui_window_clear, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_NEW, remote_ui_window_new, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_TARGET_CHANGED, remote_ui_window_target_changed, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_ACT_CHANGED, remote_ui_window_act_changed, NULL);
-	query_connect_id(&remote_plugin, VARIABLE_CHANGED, remote_variable_changed, NULL);
+	query_connect(&remote_plugin, "ui-window-switch", remote_ui_window_switch, NULL);
+	query_connect(&remote_plugin, "ui-window-kill", remote_ui_window_kill, NULL);
+	query_connect(&remote_plugin, "ui-beep", remote_ui_beep, NULL);
+	query_connect(&remote_plugin, "ui-window-print", remote_ui_window_print, NULL);
+	query_connect(&remote_plugin, "ui-window-clear", remote_ui_window_clear, NULL);
+	query_connect(&remote_plugin, "ui-window-new", remote_ui_window_new, NULL);
+	query_connect(&remote_plugin, "ui-window-target-changed", remote_ui_window_target_changed, NULL);
+	query_connect(&remote_plugin, "ui-window-act-changed", remote_ui_window_act_changed, NULL);
+	query_connect(&remote_plugin, "variable-changed", remote_variable_changed, NULL);
 
-	query_connect_id(&remote_plugin, SESSION_ADDED, remote_session_added, NULL);
+	query_connect(&remote_plugin, "session-added", remote_session_added, NULL);
 
 	/* SESSION_EVENT */
-	query_connect_id(&remote_plugin, PROTOCOL_CONNECTED, remote_protocol_connected, NULL);
-	query_connect_id(&remote_plugin, PROTOCOL_DISCONNECTED, remote_protocol_disconnected, NULL);
+	query_connect(&remote_plugin, "protocol-connected", remote_protocol_connected, NULL);
+	query_connect(&remote_plugin, "protocol-disconnected", remote_protocol_disconnected, NULL);
 
-	query_connect_id(&remote_plugin, SESSION_CHANGED, remote_session_changed, NULL);
-	query_connect_id(&remote_plugin, SESSION_RENAMED, remote_session_renamed, NULL);
+	query_connect(&remote_plugin, "session-changed", remote_session_changed, NULL);
+	query_connect(&remote_plugin, "session-renamed", remote_session_renamed, NULL);
 
-	query_connect_id(&remote_plugin, USERLIST_CHANGED, remote_userlist_changed, NULL);
-	query_connect_id(&remote_plugin, USERLIST_REFRESH, remote_userlist_refresh, NULL);
+	query_connect(&remote_plugin, "userlist-changed", remote_userlist_changed, NULL);
+	query_connect(&remote_plugin, "userlist-refresh", remote_userlist_refresh, NULL);
 #if 0
 
-	query_connect_id(&remote_plugin, UI_WINDOW_TARGET_CHANGED, ncurses_ui_window_target_changed, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
-	query_connect_id(&remote_plugin, UI_REFRESH, ncurses_ui_refresh, NULL);
-	query_connect_id(&remote_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
-	query_connect_id(&remote_plugin, BINDING_SET, ncurses_binding_set_query, NULL);
-	query_connect_id(&remote_plugin, BINDING_COMMAND, ncurses_binding_adddelete_query, NULL);
-	query_connect_id(&remote_plugin, BINDING_DEFAULT, ncurses_binding_default, NULL);
-	query_connect_id(&remote_plugin, CONFERENCE_RENAMED, ncurses_conference_renamed, NULL);
+	query_connect(&remote_plugin, "ui-window-target-changed", ncurses_ui_window_target_changed, NULL);
+	query_connect(&remote_plugin, "ui-window-refresh", ncurses_ui_window_refresh, NULL);
+	query_connect(&remote_plugin, "ui-window-update-lastlog", ncurses_ui_window_lastlog, NULL);
+	query_connect(&remote_plugin, "ui-refresh", ncurses_ui_refresh, NULL);
+	query_connect(&remote_plugin, "session-removed", ncurses_statusbar_query, NULL);
+	query_connect(&remote_plugin, "binding-set", ncurses_binding_set_query, NULL);
+	query_connect(&remote_plugin, "binding-command", ncurses_binding_adddelete_query, NULL);
+	query_connect(&remote_plugin, "binding-default", ncurses_binding_default, NULL);
+	query_connect(&remote_plugin, "conference-renamed", ncurses_conference_renamed, NULL);
 
-	query_connect_id(&remote_plugin, PROTOCOL_DISCONNECTING, ncurses_session_disconnect_handler, NULL);
+	query_connect(&remote_plugin, "protocol-disconnecting", ncurses_session_disconnect_handler, NULL);
 #endif
 
 	/* podanie czegokolwiek jako data do remote_all_contacts_changed() powoduje wyzerowanie n->start */
-	query_connect_id(&remote_plugin, UI_REFRESH, remote_all_contacts_changed, (void *) 1);
-	query_connect_id(&remote_plugin, USERLIST_REFRESH, remote_all_contacts_changed, NULL /* ? */);
+	query_connect(&remote_plugin, "ui-refresh", remote_all_contacts_changed, (void *) 1);
+	query_connect(&remote_plugin, "userlist-refresh", remote_all_contacts_changed, NULL /* ? */);
 
-	query_connect_id(&remote_plugin, SESSION_CHANGED, remote_all_contacts_changed, (void *) 1);
-	query_connect_id(&remote_plugin, SESSION_EVENT, remote_all_contacts_changed, NULL);
+	query_connect(&remote_plugin, "session-changed", remote_all_contacts_changed, (void *) 1);
+	query_connect(&remote_plugin, "session-event", remote_all_contacts_changed, NULL);
 
-	query_connect_id(&remote_plugin, METACONTACT_ADDED, remote_all_contacts_changed, NULL);
-	query_connect_id(&remote_plugin, METACONTACT_REMOVED, remote_all_contacts_changed, NULL);
-	query_connect_id(&remote_plugin, METACONTACT_ITEM_ADDED, remote_all_contacts_changed, NULL);
-	query_connect_id(&remote_plugin, METACONTACT_ITEM_REMOVED, remote_all_contacts_changed, NULL);
+	query_connect(&remote_plugin, "metacontact-added", remote_all_contacts_changed, NULL);
+	query_connect(&remote_plugin, "metacontact-removed", remote_all_contacts_changed, NULL);
+	query_connect(&remote_plugin, "metacontact-item-added", remote_all_contacts_changed, NULL);
+	query_connect(&remote_plugin, "metacontact-item-removed", remote_all_contacts_changed, NULL);
 
-	query_connect_id(&remote_plugin, USERLIST_ADDED, remote_all_contacts_changed, NULL);
-	query_connect_id(&remote_plugin, USERLIST_REMOVED, remote_all_contacts_changed, NULL);
-	query_connect_id(&remote_plugin, USERLIST_RENAMED, remote_all_contacts_changed, NULL);
+	query_connect(&remote_plugin, "userlist-added", remote_all_contacts_changed, NULL);
+	query_connect(&remote_plugin, "userlist-removed", remote_all_contacts_changed, NULL);
+	query_connect(&remote_plugin, "userlist-renamed", remote_all_contacts_changed, NULL);
 
 	{
 		int i;

@@ -51,7 +51,6 @@
 #include "plugins.h"
 #include "windows.h"
 
-#include "queries.h"
 
 /* function inside legacyconfig.c */
 void config_upgrade();
@@ -137,7 +136,7 @@ void config_postread()
 		}
 	}
 	config_upgrade();
-	query_emit_id(NULL, CONFIG_POSTINIT);
+	query_emit(NULL, "config-postinit");
 }
 
 int config_read_plugins()
@@ -194,8 +193,8 @@ int config_read(const char *filename)
 		timer_remove_user(-1);
 		event_free();
 		variable_set_default();
-		query_emit_id(NULL, SET_VARS_DEFAULT);
-		query_emit_id(NULL, BINDING_DEFAULT);
+		query_emit(NULL, "set-vars-default");
+		query_emit(NULL, "binding-default");
 		debug("  flushed previous config\n");
 	} 
 
@@ -245,7 +244,7 @@ int config_read(const char *filename)
 			char **pms = array_make(foo, (" \t"), 2, 1, 0);
 
 			if (array_count(pms) == 2) {
-				query_emit_id(NULL, BINDING_SET, pms[0], pms[1], 1);
+				query_emit(NULL, "binding-set", pms[0], pms[1], 1);
 			}
 
 			array_free(pms);

@@ -34,7 +34,6 @@
 
 #include "dynstuff_inline.h"
 #include "metacontacts.h"
-#include "queries.h"
 
 metacontact_t *metacontacts = NULL;
 
@@ -102,7 +101,7 @@ COMMAND(cmd_metacontact)
 			config_changed = 1;
 			printq("metacontact_added", params[1]);
 
-			query_emit_id(NULL, METACONTACT_ADDED, &tmp);
+			query_emit(NULL, "metacontact-added", &tmp);
 			xfree(tmp);
 		}
 		return 0;	
@@ -125,7 +124,7 @@ COMMAND(cmd_metacontact)
 			config_changed = 1;
 			printq("metacontact_removed", params[1]);
 			
-			query_emit_id(NULL, METACONTACT_REMOVED, &tmp);
+			query_emit(NULL, "metacontact-removed", &tmp);
 			xfree(tmp);
 		}
 		return 0;
@@ -147,7 +146,7 @@ COMMAND(cmd_metacontact)
 
 			printq("metacontact_added_item", session_alias_uid_n(params[2]), params[3], params[1]);
 
-			query_emit_id(NULL, METACONTACT_ITEM_ADDED, &tmp1, &tmp2, &tmp3);
+			query_emit(NULL, "metacontact-item-added", &tmp1, &tmp2, &tmp3);
 			xfree(tmp1);
 			xfree(tmp2);
 			xfree(tmp3);
@@ -171,7 +170,7 @@ COMMAND(cmd_metacontact)
 
 			printq("metacontact_removed_item", session_alias_uid_n(params[2]), params[3], params[1]);
 
-			query_emit_id(NULL, METACONTACT_ITEM_REMOVED, &tmp1, &tmp2, &tmp3);
+			query_emit(NULL, "metacontact-item-removed", &tmp1, &tmp2, &tmp3);
 			xfree(tmp1);
 			xfree(tmp2);
 			xfree(tmp3);
@@ -524,8 +523,8 @@ metacontact_item_t *metacontact_find_prio(metacontact_t *m)
  */
 void metacontact_init()
 {
-	query_connect_id(NULL, SESSION_RENAMED, metacontact_session_renamed_handler, NULL);
-	query_connect_id(NULL, USERLIST_REMOVED, metacontact_userlist_removed_handler, NULL);
+	query_connect(NULL, "session-renamed", metacontact_session_renamed_handler, NULL);
+	query_connect(NULL, "userlist-removed", metacontact_userlist_removed_handler, NULL);
 }
 
 /*

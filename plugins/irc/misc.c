@@ -283,7 +283,7 @@ next2:
 				xfree(u->descr);
 				u->status	= EKG_STATUS_AVAIL;
 				u->descr	= xstrdup("description... ?");
-				query_emit_id(NULL, USERLIST_CHANGED, &(s->uid), &(u->uid));
+				query_emit(NULL, "userlist-changed", &(s->uid), &(u->uid));
 			}
 		} else {
 			string_t str = string_init(r->descr);
@@ -436,7 +436,7 @@ and the prefix.
 	if (xstrlen(q[1]) > 1) {
 		if(!gatoi(q[1], &ecode)) {
 			/* for scripts */
-			char *emitname = saprintf(("irc-protocol-numeric %s"), q[1]);
+			char *emitname = saprintf("irc-protocol-numeric %s", q[1]);
 			char **pq = &(q[2]);
 			if ((query_emit(NULL, "irc-protocol-numeric", &s->uid, &ecode, &pq) == -1) ||
 			    (query_emit(NULL, emitname, &s->uid, &pq) == -1))
@@ -1100,7 +1100,7 @@ IRC_COMMAND(irc_c_nick)
 			xfree(w->target);
 			w->target = irc_uid(newnick);
 
-			query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
+			query_emit(NULL, "ui-window-target-changed", &w);
 
 			print_window_w(w, EKG_WINACT_JUNK, "IRC_NEWNICK",
 					session_name(s), nick, ihost, newnick);
@@ -1224,9 +1224,9 @@ IRC_COMMAND(irc_c_msg)
 		int isour = 0;
 
 		if (xosd_is_priv) /* @ wrong place */
-			query_emit_id(NULL, MESSAGE_DECRYPT, &(s->uid), &dest, &ctcpstripped, &secure , NULL);
+			query_emit(NULL, "message-decrypt", &(s->uid), &dest, &ctcpstripped, &secure , NULL);
 		else
-			query_emit_id(NULL, MESSAGE_DECRYPT, &dest, &(s->uid), &ctcpstripped, &secure , NULL);
+			query_emit(NULL, "message-decrypt", &dest, &(s->uid), &ctcpstripped, &secure , NULL);
 
 		/* TODO 'secure' var checking, but still don't know how to react to it (GiM)
 		 */
@@ -1284,7 +1284,7 @@ isour - 0 tutaj czy wiadomosc jest od nas.
 irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 	*/
 
-		query_emit_id(NULL, IRC_PROTOCOL_MESSAGE,
+		query_emit(NULL, "irc-protocol-message",
 				&(s->uid), &sender, &coloured, &isour,
 				&xosd_to_us, &xosd_is_priv, &dest);
 
@@ -1372,7 +1372,7 @@ IRC_COMMAND(irc_c_join)
 		if (xstrcmp(__channel, chname))
 			newwin->alias = xstrdup(chname);
 
-		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &newwin);	/* let's emit UI_WINDOW_TARGET_CHANGED XXX, another/new query? */
+		query_emit(NULL, "ui-window-target-changed", &newwin);	/* let's emit UI_WINDOW_TARGET_CHANGED XXX, another/new query? */
 
 		window_switch(newwin->id);
 		debug_function("[irc] c_join() %08X\n", newwin);
@@ -1395,7 +1395,7 @@ IRC_COMMAND(irc_c_join)
 			char *__uid_full = xstrdup(ekg2_channel);
 			char *__msg	 = xstrdup("test");
 
-			if (query_emit_id(NULL, MESSAGE_ENCRYPT, &__sid, &__uid_full, &__msg, &__secure) == 0 && __secure) 
+			if (query_emit(NULL, "message-encrypt", &__sid, &__uid_full, &__msg, &__secure) == 0 && __secure) 
 				print_info(ekg2_channel, s, "channel_secure", session_name(s), chname);
 			else	print_info(ekg2_channel, s, "channel_unsecure", session_name(s), chname);
 			xfree(__msg);
@@ -1524,7 +1524,7 @@ IRC_COMMAND(irc_c_kick)
 /*sending irc-kick event*/
 	_session = xstrdup(session_uid_get(s));
 	_nick = irc_uid(OMITCOLON(param[3]));
-	query_emit_id(NULL, IRC_KICK, &_session, &_nick, &ekg2_channel, &uid);
+	query_emit(NULL, "irc-kick", &_session, &_nick, &ekg2_channel, &uid);
 	xfree(_nick);
 	xfree(_session);
 
@@ -1771,7 +1771,7 @@ IRC_COMMAND(irc_c_mode)
 
 			if ((ul = userlist_find_u(&(ch->chanp->window->userlist), param[k]))) {
 				irc_nick_prefix(j, ch, irc_color_in_contacts(j, ch->mode, ul));
-				query_emit_id(NULL, USERLIST_REFRESH);
+				query_emit(NULL, "userlist-refresh");
 			}
 		}
 

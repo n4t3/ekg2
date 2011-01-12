@@ -156,7 +156,7 @@ static char *fstring_reverse(fstring_t *fstr) {
 		return NULL;
 
 	attr = fstr->attr;
-	str = fstr->str.b;
+	str = fstr->str;
 
 	if (!attr || !str)
 		return NULL;
@@ -398,7 +398,7 @@ static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *
 static void logs_window_new(window_t *w) {
 	const char *uid;
 
-	if (!w->target || !w->session || w->id == 1000)
+	if (!w->target || !w->session || w->id == WINDOW_CONTACTS_ID) /* XXX w->id in WINDOW_RESERVED_ID ??? */
 		return;
 
 	uid = get_uid_any(w->session, w->target);
@@ -471,7 +471,7 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 	fstr = fstring_new_format(line);
 	fstr->ts = ts;
 
-	query_emit_id(ui_plugin, UI_WINDOW_PRINT, &w, &fstr);
+	query_emit(ui_plugin, "ui-window-print", &w, &fstr);
 	return 0;
 }
 
@@ -535,7 +535,7 @@ static int logs_buffer_raw_display(const char *file, int items) {
 
 	if (w) {
 		w->lock--;
-		query_emit_id(NULL, UI_WINDOW_REFRESH);
+		query_emit(NULL, "ui-window-refresh");
 	}
 
 	xfree(bs);
@@ -1197,14 +1197,14 @@ EXPORT int logs_plugin_init(int prio) {
 
 	plugin_register(&logs_plugin, prio);
 	
-	query_connect_id(&logs_plugin, SET_VARS_DEFAULT,logs_setvar_default, NULL);
-	query_connect_id(&logs_plugin, PROTOCOL_MESSAGE_POST, logs_handler, NULL);
-	query_connect_id(&logs_plugin, IRC_PROTOCOL_MESSAGE, logs_handler_irc, NULL);
-	query_connect_id(&logs_plugin, UI_WINDOW_NEW,	logs_handler_newwin, NULL);
-	query_connect_id(&logs_plugin, UI_WINDOW_PRINT,	logs_handler_raw, NULL);
-	query_connect_id(&logs_plugin, UI_WINDOW_KILL,	logs_handler_killwin, NULL);
-	query_connect_id(&logs_plugin, PROTOCOL_STATUS, logs_status_handler, NULL);
-	query_connect_id(&logs_plugin, CONFIG_POSTINIT, logs_postinit, NULL);
+	query_connect(&logs_plugin, "set-vars-default",logs_setvar_default, NULL);
+	query_connect(&logs_plugin, "protocol-message-post", logs_handler, NULL);
+	query_connect(&logs_plugin, "irc-protocol-message", logs_handler_irc, NULL);
+	query_connect(&logs_plugin, "ui-window-new",	logs_handler_newwin, NULL);
+	query_connect(&logs_plugin, "ui-window-print",	logs_handler_raw, NULL);
+	query_connect(&logs_plugin, "ui-window-kill",	logs_handler_killwin, NULL);
+	query_connect(&logs_plugin, "protocol-status", logs_status_handler, NULL);
+	query_connect(&logs_plugin, "config-postinit", logs_postinit, NULL);
 	/* XXX, implement UI_WINDOW_TARGET_CHANGED, IMPORTANT!!!!!! */
 
 	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */

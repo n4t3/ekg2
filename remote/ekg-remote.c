@@ -93,10 +93,10 @@ static int stderr_backup = -1;
 
 int no_mouse = 0;
 
-char *events_all[] = { "protocol-message", "event_avail", "event_away", "event_na", "event_online", "event_descr", NULL };
+char *events_all[] = { "protocol-message", "event-avail", "event-away", "event-na", "event-online", "event-descr", NULL };
 
 static void config_postread() {
-	query_emit_id(NULL, CONFIG_POSTINIT); 
+	query_emit(NULL, "config-postinit");
 
 	/* legacyconfig.c */
 #if ! USE_UNICODE
@@ -116,7 +116,7 @@ static int config_read(const char *filename) { return -1; }	/* XXX, czyli przecz
 static int session_read(const char *filename) { return -1; }
 
 static int metacontact_read() { return -1; }
-static void metacontact_init() { } 
+static void metacontact_init() { }
 static void metacontacts_destroy() { }
 
 void *metacontacts;
@@ -159,7 +159,7 @@ void ekg_loop() {
 	for (t = timers; t; t = t->next) {
 		if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
 			int ispersist = t->persist;
-				
+
 			if (ispersist) {
 				memcpy(&t->ends, &tv, sizeof(tv));
 				t->ends.tv_sec += (t->period / 1000);
@@ -200,8 +200,8 @@ void ekg_loop() {
 		if ((w->type & WATCH_READ))
 			FD_SET(w->fd, &rd);
 		if ((w->type & WATCH_WRITE)) {
-			if (w->buf && !w->buf->len) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
-			FD_SET(w->fd, &wd); 
+			if (w->buf && !w->buf->len) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */
+			FD_SET(w->fd, &wd);
 		}
 	}
 
@@ -222,7 +222,7 @@ void ekg_loop() {
 		/* jesli wiecej niz sekunda, to nie ma znacznia */
 		if (usec >= 1000000)
 			continue;
-				
+
 		/* jesli mniej niz aktualny timeout, zmniejsz */
 		if (stv.tv_sec * 1000000 + stv.tv_usec > usec) {
 			stv.tv_sec = 0;
@@ -268,7 +268,7 @@ void ekg_loop() {
 		if (!w)
 			continue;
 
-		if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) || 
+		if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) ||
 			((w->type == WATCH_READ) && FD_ISSET(w->fd, &rd)))
 		{
 			watch_handle(w);
@@ -315,7 +315,7 @@ static void handle_sigsegv()
 "i najprawdopodobniej pozwoli to unikn±æ tego typu sytuacji w przysz³o¶ci.\r\n"
 "Wiêcej szczegó³ów w dokumentacji, w pliku ,,gdb.txt''.\r\n"
 "\r\n",
-	(int) getpid(), 
+	(int) getpid(),
 	argv0, (int) getpid());
 
 	raise(SIGSEGV);			/* niech zrzuci core */
@@ -380,7 +380,7 @@ EXPORTNOT void ekg_debug_handler(int level, const char *format, va_list ap) {
 		default:			theme_format = "remote_debug";		break;
 	}
 
-	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	query_emit(NULL, "ui-is-initialized", &is_UI);
 
 	if (is_UI && window_debug) {
 		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, tmp);
@@ -562,8 +562,11 @@ int main(int argc, char **argv)
 _test:
 	in_autoexec = 1;
 
-	query_connect_id(NULL, IRC_TOPIC, remote_irc_topic_helper, NULL);
-	query_connect_id(NULL, MAIL_COUNT, remote_mail_count_helper, NULL);
+	query_register("mail-count",	QUERY_ARG_INT,		/* mail count */
+					QUERY_ARG_END);
+
+	query_connect(NULL, "irc-topic", remote_irc_topic_helper, NULL);
+	query_connect(NULL, "mail-count", remote_mail_count_helper, NULL);
 
 	if (frontend)
 		plugin_load(frontend);
@@ -591,7 +594,7 @@ _test:
 		return 0;		/* never here */
 	}
 
-	query_emit_id(NULL, SESSION_EVENT);			/* XXX, dla ncures, zeby sie statusbar odswiezyl */
+	query_emit(NULL, "session-event");			/* XXX, dla ncures, zeby sie statusbar odswiezyl */
 
 	config_read(NULL);
 
@@ -635,9 +638,9 @@ _test:
 
 	metacontact_read(); /* read the metacontacts info */
 
-	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
+	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
-	if (query_emit_id(NULL, UI_LOOP) != -1) {
+	if (query_emit(NULL, "ui-loop") != -1) {
 		/* krêæ imprezê */
 		while (1) {
 			ekg_loop();

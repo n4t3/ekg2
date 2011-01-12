@@ -701,10 +701,10 @@ EXPORT int polchat_plugin_init(int prio) {
 
 	plugin_register(&polchat_plugin, prio);
 
-	query_connect_id(&polchat_plugin, PROTOCOL_VALIDATE_UID, polchat_validate_uid, NULL);
-	query_connect_id(&polchat_plugin, SESSION_ADDED, polchat_session_init, NULL);
-	query_connect_id(&polchat_plugin, SESSION_REMOVED, polchat_session_deinit, NULL);
-	query_connect_id(&polchat_plugin, PLUGIN_PRINT_VERSION, polchat_print_version, NULL);
+	query_connect(&polchat_plugin, "protocol-validate-uid", polchat_validate_uid, NULL);
+	query_connect(&polchat_plugin, "session-added", polchat_session_init, NULL);
+	query_connect(&polchat_plugin, "session-removed", polchat_session_deinit, NULL);
+	query_connect(&polchat_plugin, "plugin-print-version", polchat_print_version, NULL);
 
 #if 0
 	query_connect(&irc_plugin, ("ui-window-kill"),	irc_window_kill, NULL);

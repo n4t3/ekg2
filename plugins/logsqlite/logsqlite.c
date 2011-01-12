@@ -759,7 +759,8 @@ static QUERY(logsqlite_newwin_handler) {
 	int		count;
 #endif
 
-	if (!config_logsqlite_last_print_on_open || !w || !w->target || !w->session || w->id == 1000
+	if (!config_logsqlite_last_print_on_open || !w || !w->target || !w->session
+			|| w->id == WINDOW_CONTACTS_ID /* XXX w->id in WINDOW_RESERVED_ID ??? */
 			|| !(uid = get_uid_any(w->session, w->target))
 			|| (ignored_check(w->session, uid) & IGNORE_LOG)
 			|| !(db = logsqlite_prepare_db(w->session, time(0), 0)))
@@ -844,9 +845,9 @@ int logsqlite_plugin_init(int prio)
 	command_add(&logsqlite_plugin, "logsqlite:laststatus", "puU puU puU puU puU", logsqlite_cmd_laststatus, 0, "-n --number -s --search");
 	command_add(&logsqlite_plugin, "logsqlite:sync", NULL, logsqlite_cmd_sync, 0, 0);
 
-	query_connect_id(&logsqlite_plugin, PROTOCOL_MESSAGE_POST, logsqlite_msg_handler, NULL);
-	query_connect_id(&logsqlite_plugin, PROTOCOL_STATUS, logsqlite_status_handler, NULL);
-	query_connect_id(&logsqlite_plugin, UI_WINDOW_NEW,	logsqlite_newwin_handler, NULL);
+	query_connect(&logsqlite_plugin, "protocol-message-post", logsqlite_msg_handler, NULL);
+	query_connect(&logsqlite_plugin, "protocol-status", logsqlite_status_handler, NULL);
+	query_connect(&logsqlite_plugin, "ui-window-new",	logsqlite_newwin_handler, NULL);
 
 	variable_add(&logsqlite_plugin, ("last_open_window"), VAR_BOOL, 1, &config_logsqlite_last_open_window, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("last_in_window"), VAR_BOOL, 1, &config_logsqlite_last_in_window, NULL, NULL, NULL);

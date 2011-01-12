@@ -849,7 +849,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 		if (!(u = userlist_find(s, uid)))
 			return;
 
-		query_emit(NULL, ("protocol-dcc-validate"), &__host, &__port, &__valid, NULL);
+		query_emit(NULL, "protocol-dcc-validate", &__host, &__port, &__valid, NULL);
 /*		xfree(__host); */
 
 		if (!__valid) {
@@ -1726,20 +1726,20 @@ int EXPORT gg_plugin_init(int prio) {
 
 	gg_setvar_default(NULL, dummy);
 
-	query_connect_id(&gg_plugin, SET_VARS_DEFAULT, gg_setvar_default, NULL);
-	query_connect_id(&gg_plugin, PROTOCOL_VALIDATE_UID, gg_validate_uid, NULL);
-	query_connect_id(&gg_plugin, PLUGIN_PRINT_VERSION, gg_print_version, NULL);
-	query_connect_id(&gg_plugin, SESSION_ADDED, gg_session_init, NULL);
-	query_connect_id(&gg_plugin, SESSION_REMOVED, gg_session_deinit, NULL);
-	query_connect_id(&gg_plugin, ADD_NOTIFY, gg_add_notify_handle, NULL);
-	query_connect_id(&gg_plugin, REMOVE_NOTIFY, gg_remove_notify_handle, NULL);
-	query_connect_id(&gg_plugin, STATUS_SHOW, gg_status_show_handle, NULL);
-	query_connect(&gg_plugin, ("user-offline"), gg_user_offline_handle, NULL);
-	query_connect(&gg_plugin, ("user-online"), gg_user_online_handle, NULL);
-	query_connect_id(&gg_plugin, PROTOCOL_UNIGNORE, gg_user_online_handle, (void *)1);
-	query_connect_id(&gg_plugin, USERLIST_INFO, gg_userlist_info_handle, NULL);
-	query_connect_id(&gg_plugin, USERLIST_PRIVHANDLE, gg_userlist_priv_handler, NULL);
-	query_connect_id(&gg_plugin, PROTOCOL_TYPING_OUT, gg_typing_out, NULL);
+	query_connect(&gg_plugin, "set-vars-default", gg_setvar_default, NULL);
+	query_connect(&gg_plugin, "protocol-validate-uid", gg_validate_uid, NULL);
+	query_connect(&gg_plugin, "plugin-print-version", gg_print_version, NULL);
+	query_connect(&gg_plugin, "session-added", gg_session_init, NULL);
+	query_connect(&gg_plugin, "session-removed", gg_session_deinit, NULL);
+	query_connect(&gg_plugin, "add-notify", gg_add_notify_handle, NULL);
+	query_connect(&gg_plugin, "remove-notify", gg_remove_notify_handle, NULL);
+	query_connect(&gg_plugin, "status-show", gg_status_show_handle, NULL);
+	query_connect(&gg_plugin, "user-offline", gg_user_offline_handle, NULL);
+	query_connect(&gg_plugin, "user-online", gg_user_online_handle, NULL);
+	query_connect(&gg_plugin, "protocol-unignore", gg_user_online_handle, (void *)1);
+	query_connect(&gg_plugin, "userlist-info", gg_userlist_info_handle, NULL);
+	query_connect(&gg_plugin, "userlist-privhandle", gg_userlist_priv_handler, NULL);
+	query_connect(&gg_plugin, "protocol-typing-out", gg_typing_out, NULL);
 	
 	gg_register_commands();
 
