@@ -133,8 +133,8 @@ static char *log_escape(const char *str)
 }
 
 static char *fstring_reverse(fstring_t *fstr) {
-	const char *str;
-	const short *attr;
+	const gunichar *str;
+	const guint16 *attr;
 	string_t asc;
 	int i;
 
@@ -153,6 +153,7 @@ static char *fstring_reverse(fstring_t *fstr) {
 #define prev	attr[i-1]
 #define cur	attr[i] 
 		int reset = 0;
+		gchar buf[6];
 
 		if (i) {
 			if (!(cur & FSTR_BOLD) && (prev & FSTR_BOLD))		reset = 1;
@@ -213,7 +214,7 @@ static char *fstring_reverse(fstring_t *fstr) {
 	/* str */
 		if (str[i] == '%' || str[i] == '\\') 
 			string_append_c(asc, '\\');
-		string_append_c(asc, str[i]);
+		string_append_raw(asc, buf, g_unichar_to_utf8(str[i], buf));
 	}
 
 /* reset, and return. */
