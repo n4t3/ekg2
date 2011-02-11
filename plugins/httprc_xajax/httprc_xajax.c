@@ -92,29 +92,26 @@ char *generate_cookie(void)
 	return saprintf("%x%d%d", rand()*rand(), (int)time(NULL), rand());
 }
 
-char *escape_single_quote(char *p)
+char *escape_single_quote(gunichar *p)
 {
 	string_t s = string_init(NULL);
-	int l=xstrlen(p);
-	while (l>0)
-	{
+	for (; *p; p = g_utf8_find_next_char(p, NULL)) {
+		gchar buf[6];
 		if (*p == '\'')
 			string_append(s, "\\'");
 		else
-			string_append_c(s, *p);
-		l --;
-		p ++;
+			string_append_raw(s, buf, g_unichar_to_utf8(*p, buf));
 	}
 	return string_free(s, 0);
 }
 
 char *http_fstring(int winid, char *parent, fstring_t *line)
 {
-	short *attr = line->attr;
-	char *str = line->str;
+	guint16 *attr = line->attr;
+	gunichar *str = line->str;
 	string_t asc = string_init(NULL);
 	int i, last, lastbeg, len, att;
-	char tempchar;
+	gunichar tempchar;
 	char *normal;
 	char *tmp;
 	char *colortbl[10] = { "grey", "red", "green", "yellow", "blue", "purple", "turquoise", "white" };
@@ -136,7 +133,7 @@ char *http_fstring(int winid, char *parent, fstring_t *line)
 	 * <strong><span>...</span>  ... <span> ... </span> </strong>
 	 * since this would be quite senseless
 	 */
-	len = strlen(str);
+	len = line->len;
 	for (i = 1; i <= len; i++)
 	{
 		if (attr[i] == last)
