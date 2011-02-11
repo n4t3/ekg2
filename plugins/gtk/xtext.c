@@ -89,7 +89,7 @@ struct textentry {
 
 	fstring_t *fstr;
 
-	const unsigned char *str;
+	guchar *str;
 	gint16 str_width;
 	gint16 str_len;
 	gint16 mark_start;
@@ -3212,7 +3212,7 @@ gtk_xtext_render_line(GtkXText * xtext, textentry * ent, int line,
 		      int lines_max, int subline, int win_width)
 {
 	const unsigned char *str;
-	short *attr;
+	guint16 *attr;
 	int indent, taken, entline, len, y, start_subline;
 
 	entline = taken = 0;
@@ -3796,7 +3796,8 @@ static void gtk_xtext_remove_top(xtext_buffer * buffer)
 	if (buffer->marker_pos == ent)
 		buffer->marker_pos = NULL;
 
-	free(ent);
+	g_free(ent->str);
+	g_free(ent);
 
 	if (visible) {
 		if (!buffer->xtext->add_io_tag) {
@@ -3985,12 +3986,12 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 	int space;
 	int tempindent;
 
-	size_t len = xstrlen(fstr->str);
+	size_t len = fstr->len;
 
 	if (len >= sizeof(buf->xtext->scratch_buffer))
 		len = sizeof(buf->xtext->scratch_buffer) - 1;
 
-	ent = xmalloc(sizeof(textentry));
+	ent = g_new(textentry, 1);
 	ent->fstr = fstr;
 
 	/* NOTE, xchat create new string with str[0] = ' ' str[1...] = str[0...] 
@@ -3999,16 +4000,15 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 	 *	slowdown, hack.
 	 */
 
-	ent->fstr->str = xrealloc(ent->fstr->str, sizeof(char) * (len+2));
-		memmove(ent->fstr->str+1, ent->fstr->str, len);
-		ent->fstr->str[0] = ' ';
-		ent->fstr->str[len+1] = '\0';
-	ent->fstr->attr  = xrealloc(ent->fstr->attr, sizeof(short) * (len+1));
-		memmove(ent->fstr->attr+1, ent->fstr->attr, len*sizeof(short));
-		ent->fstr->attr[0] = FSTR_NORMAL;
+	ent->fstr->str = g_realloc(ent->fstr->str, sizeof(gunichar) * (len+2));
+	g_memmove(ent->fstr->str+1, ent->fstr->str, len*sizeof(gunichar)+1);
+	ent->fstr->str[0] = ' ';
+	ent->fstr->attr = g_realloc(ent->fstr->attr, sizeof(guint16) * (len+1));
+	g_memmove(ent->fstr->attr+1, ent->fstr->attr, len*sizeof(guint16));
+	ent->fstr->attr[0] = FSTR_NORMAL;
 
 	ent->left_len = 0;
-	ent->str = fstr->str;
+	ent->str = g_ucs4_to_utf8(fstr->str, -1, NULL, NULL, NULL);
 	ent->str_len = len+1;
 	ent->indent = (buf->indent) - buf->xtext->space_width;
 
@@ -4199,7 +4199,8 @@ void gtk_xtext_buffer_free(xtext_buffer * buf) {
 
 	for (ent = buf->text_first; ent;) {
 		textentry *next = ent->next;
-		free(ent);
+		g_free(ent->str);
+		g_free(ent);
 		/* XXX, fstring_t */
 		ent = next;
 	}
