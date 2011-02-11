@@ -205,48 +205,50 @@ static const char *format_ansi(char ch) {
 	return ("");
 }
 
-static char *fstring2str(fstring_t *f) {
-	static char *fore = "krgybmcwKRGYBMCW";
-	static char *back = "lshzeqdx";
-	int i;
-	short prevattr = FSTR_NORMAL;
+static gchar *fstring2str(fstring_t *f) {
+	const gchar *fore = "krgybmcwKRGYBMCW";
+	const gchar *back = "lshzeqdx";
+	static gchar buf[6];
+	guint16 prevattr = FSTR_NORMAL;
 	string_t st = string_init(NULL);
 
-	for (i=0; i < strlen(f->str); i++) {
-		short attr = f->attr[i];
+	gunichar *ch;
+	guint16 *attr;
 
-		if (attr != prevattr) {
-			short change = attr ^ prevattr;
-			prevattr = attr;
+	for (ch = f->str, attr = f->attr; *ch; ch++, attr++) {
+		if (*attr != prevattr) {
+			guint16 change = *attr ^ prevattr;
+			prevattr = *attr;
 			if (change & FSTR_BLINK) {
-				if (attr & FSTR_BLINK)
+				if (prevattr & FSTR_BLINK)
 					string_append(st, format_ansi('i'));	/* turn on blinking */
 				else
 					change |= FSTR_NORMAL;
 			}
 			if (change & FSTR_UNDERLINE) {
-				if (attr & FSTR_UNDERLINE)
+				if (prevattr & FSTR_UNDERLINE)
 					string_append(st, format_ansi('U'));	/* turn on underline */
 				else
 					change |= FSTR_NORMAL;
 			}
 			if (change & FSTR_REVERSE) {
-				if (attr & FSTR_BLINK)
+				if (prevattr & FSTR_BLINK)
 					string_append(st, format_ansi('V'));	/* turn on reverse */
 				else
 					change |= FSTR_NORMAL;
 			}
-			if ((change & FSTR_NORMAL) && (attr & FSTR_NORMAL)) {
+			if ((change & FSTR_NORMAL) && (prevattr & FSTR_NORMAL)) {
 				string_append(st, format_ansi('n'));
 			}
 			if (change & (FSTR_BOLD|FSTR_FOREMASK)) {
-				char c = fore[(attr & FSTR_FOREMASK) + ((attr & FSTR_BOLD) ? 8 : 0)];
+				const char c = fore[(prevattr & FSTR_FOREMASK) + ((prevattr & FSTR_BOLD) ? 8 : 0)];
 				string_append(st, format_ansi(c));
 			}
 			if (change & FSTR_BACKMASK)
-				string_append(st, format_ansi(back[(attr & FSTR_BACKMASK)>>3]));
-                }
-		string_append_c(st, f->str[i]);
+				string_append(st, format_ansi(back[(prevattr & FSTR_BACKMASK)>>3]));
+        }
+		/* XXX: optimize? */
+		string_append_raw(st, buf, g_unichar_to_utf8(*ch, buf));
 	}
 	return string_free(st, 0);
 }
@@ -484,10 +486,10 @@ static char *va_format_string(const char *format, va_list ap) {
 
 				if (fill_length) {
 					fstring_t * fstr = fstring_new(str);
-					int len = strlen_pl(fstr->str);
+					const int len = fstr->len;
 					if (len >= fill_length) {
 						if (!fill_soft) {
-							fstr->str[utf8str_char2bytes(fstr->str, fill_length)] = 0;
+							fstr->str[fill_length] = 0;
 							str = fstring2str(fstr);
 							need_free = 1;
 						}
@@ -535,7 +537,7 @@ static char *va_format_string(const char *format, va_list ap) {
 /**
  * fstring_new()
  *
- * Change formatted ansi string (@a str) to Nowy-i-Lepszy (tm) [New-and-Better].
+ * Change formatted utf8 string (@a str) to fstring_t.
  *
  * @param str - string
  *
@@ -545,41 +547,45 @@ static char *va_format_string(const char *format, va_list ap) {
  * @return Allocated fstring_t.
  */
 
-fstring_t *fstring_new(const char *str) {
+fstring_t *fstring_new(const gchar *str) {
 #define NPAR 16			/* ECMA-48 CSI have got max 16 params (NPAR) defined in <linux/console_struct.h> */
 	fstring_t *res;
-	char *tmpstr;
-	short attr = FSTR_NORMAL;
-	int i, j, len = 0, isbold = 0;
+	gunichar *tmpstr;
+	guint16 attr = FSTR_NORMAL;
+	int j = 0, len = 0;
+	gboolean isbold = FALSE;
+	gunichar ch;
+	const gchar *c;
 
-	for (i = 0; str[i]; i++) {
-		if (str[i] == 27) {
+	for (c = str; *c; c = g_utf8_find_next_char(c, NULL)) {
+		/* below we're only using ASCII chars, thus we need not to do magic */
+		if (*c == 27) {
 			int parcount = 0;
-			if (str[i + 1] != '[')
+			if (c[1] != '[')
 				continue;
-			i += 2;		/* skip begining */
-			while ((str[i] == ';' && parcount++ < NPAR-1) || (str[i] >= '0' && str[i] <= '9'))	/* find max NPAR-1 seq */
-				i++;
-			if (str[i] == 'm') i++;		/* skip 'm' */
-			i--;
+			c += 2;		/* skip prologue */
+			while ((*c == ';' && parcount++ < NPAR-1) || (*c >= '0' && *c <= '9')) /* find max NPAR-1 seq */
+				c++;
+			if (*c != 'm') c--; /* skip 'm' */
 
 			continue;
 		}
 
-		if (str[i] == 9) {
+		if (*c == 9) {
 			len += (8 - (len % 8));
 			continue;
 		}
 
-		if (str[i] == 13)
+		if (*c == 13)
 			continue;
 
 		len++;
 	}
 
-	res			= xmalloc(sizeof(fstring_t));
-	res->str = tmpstr	= xmalloc((len + 1) * sizeof(char));
-	res->attr		= xmalloc((len + 1) * sizeof(short));
+	res			= g_new0(fstring_t, 1);
+	res->len		= len;
+	res->str = tmpstr	= g_new(gunichar, len + 1);
+	res->attr		= g_new(guint16, len + 1);
 
 	res->margin_left = -1;
 /*
@@ -587,52 +593,51 @@ fstring_t *fstring_new(const char *str) {
 	res->prompt_empty = 0;
  */
 
-	for (i = 0, j = 0; str[i]; i++) {
-		if ((str[i] == 27) && (str[i+1] == '(')) {
-			i += 2;
-			if (str[i] == '0') {
+	for (c = str, j = 0; *c; c = g_utf8_find_next_char(c, NULL)) {
+		if ((*c == 27) && (c[1] == '(')) {
+			c += 2;
+			if (*c == '0') {
 				attr |= FSTR_ALTCHARSET;
 				continue;
-			} else if (str[i] == 'B') {
+			} else if (*c == 'B') {
 				attr &= ~FSTR_ALTCHARSET;
 				continue;
 			}
-		} else if (str[i] == 27) {		/* ESC- */
+		} else if (*c == 27) {		/* ESC- */
 			unsigned short par[NPAR]	= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
 			unsigned short parlen[NPAR]	= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
 
 			int npar	= 0; 
 
-			if (str[i + 1] != ('['))
+			if (c[1] != ('['))
 				continue;
-			i += 2;
+			c++;
 
 			/* parse ECMA-48 CSI here & build data */
 			while (1) {	/* idea based from kernel sources */
-				char c = str[i++];
+				gchar ch = *(++c);
 
-				if (c == ';' && npar < NPAR -1) {	/* next param */
+				if (ch == ';' && npar < NPAR - 1) {	/* next param */
 					npar++;
 					continue;
-				} else if (c >= '0' && c <= '9') {	/* code */
-					par[npar] *= 10;			/* multiply current */
-					par[npar] += c - '0';		/* add current */
+				} else if (ch >= '0' && ch <= '9') {	/* code */
+					par[npar] *= 10;		/* multiply current */
+					par[npar] += ch - '0';		/* add current */
 					parlen[npar]++;			/* some old code must know sequence length... stupid */
 					continue;
 				} else {				/* params done */
 					break;
 				}
 			}
-			i--;
 
-			if (str[i] == 'm') {	/* parse sequence to internal attr we only parse seq like \033[...m */
+			if (*c == 'm') {	/* parse sequence to internal attr we only parse seq like \033[...m */
 				int k;
 				for (k=0; k <= npar; k++) {
 					unsigned short cur = par[k];
 					switch (cur) {
 						case 0:				/* RESET */
 							attr = FSTR_NORMAL;
-							isbold = 0;
+							isbold = FALSE;
 
 							if (parlen[k] == 4)	/* /| set margin */
 								res->margin_left = j;
@@ -649,12 +654,12 @@ fstring_t *fstring_new(const char *str) {
 								attr ^= FSTR_BOLD;
 							else {					/* if (*p == (';')) */
 								attr |= FSTR_BOLD;
-								isbold = 1;
+								isbold = TRUE;
 							}
 							break;
 						case 2:
 							attr &= (FSTR_BACKMASK);
-							isbold = 0;
+							isbold = FALSE;
 							break;
 						case 4:	attr ^= FSTR_UNDERLINE;	break;	/* UNDERLINE */
 						case 5: attr ^= FSTR_BLINK;	break;	/* BLINK */
@@ -676,10 +681,10 @@ fstring_t *fstring_new(const char *str) {
 			continue;
 		}
 
-		if (str[i] == 13)
+		if (*c == 13)
 			continue;
 
-		if (str[i] == 9) {
+		if (*c == 9) {
 			int k = 0, l = 8 - (j % 8);
 
 			for (k = 0; k < l; j++, k++) {
@@ -690,14 +695,15 @@ fstring_t *fstring_new(const char *str) {
 			continue;
 		}
 
-		tmpstr[j] = str[i];
-		res->attr[j] = attr;
-		j++;
+		ch = g_utf8_get_char_validated(c, -1);
+		if (ch < 0) { /* invalid char */
+			ch = '?';
+			res->attr[j] = attr | FSTR_REVERSE;
+		} else
+			res->attr[j] = attr;
+		tmpstr[j++] = ch;
 	}
-/* 
-	tmpstr[j] = (char) 0;
-	res->attr[j] = 0;
- */
+	tmpstr[j] = 0; /* null-terminate */
 
 	return res;
 }
@@ -738,10 +744,10 @@ void fstring_free(fstring_t *str)
 	if (!str)
 		return;
 
-	xfree(str->str);
-	xfree(str->attr);
-	xfree(str->priv_data);
-	xfree(str);
+	g_free(str->str);
+	g_free(str->attr);
+	g_free(str->priv_data);
+	g_free(str);
 }
 
 /*

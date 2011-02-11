@@ -32,8 +32,9 @@ extern "C" {
 #endif
 
 typedef struct {
-	char *str;				/* possibly multibyte string */
-	short		*attr;			/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
+	gunichar	*str;			/* the actual ucs4 string */
+	guint16		*attr;			/* attributes, same len as str */
+	int		len;			/* (shorthand) length of the string */
 	time_t		ts;			/* timestamp */
 
 	int		prompt_len;		/* d³ugo¶æ promptu, który bêdzie powtarzany przy
