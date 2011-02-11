@@ -170,7 +170,7 @@ static QUERY(ncurses_ui_window_switch) {
 	ncurses_typingsend(w, EKG_CHATSTATE_ACTIVE);
 
 	p = w->alias ? w->alias : (w->target ? w->target : NULL);
-	if (ncurses_settitle)
+	if (ncurses_settitle) /* XXX: recode it? */
 		printf(ncurses_settitle_formats[ncurses_settitle], p ? p : "", p ? " - " : "", "EKG2");
 
 	return 0;
