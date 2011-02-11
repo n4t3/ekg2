@@ -124,11 +124,11 @@ static QUERY(readline_ui_window_switch) { /* window_switch */
 	return 0;
 }
 
-static char *readline_change_string_t_back_to_char(const char *str, const short *attr) {
+static char *readline_change_fstring_t_back_to_char(const gunichar *str, const guint16 *attr) {
 	int i;
 	string_t asc = string_init(NULL);
 
-	for (i = 0; i < xstrlen(str); i++) {
+	for (i = 0; str[i]; i++) {
 #define ISBOLD(x)	(x & 64)
 #define ISBLINK(x)	(x & 256) 
 #define ISUNDERLINE(x)	(x & 512)
@@ -140,6 +140,7 @@ static char *readline_change_string_t_back_to_char(const char *str, const short 
 #define cur	attr[i] 
 
 		int reset = 1;
+		gchar buf[6];
 
 	/* attr */
 		if (i && !ISBOLD(cur)  && ISBOLD(prev));		/* NOT BOLD */
@@ -189,15 +190,15 @@ static char *readline_change_string_t_back_to_char(const char *str, const short 
 
 	/* str */
 		if (str[i] == '%' || str[i] == '\\') string_append_c(asc, '\\');	/* escape chars.. */
-		string_append_c(asc, str[i]);			/* append current char */
+		string_append_raw(asc, buf, g_unichar_to_utf8(str[i], buf));
 	}
 	string_append(asc, ("%n"));	/* reset */
 	string_append_c(asc, '\n');		/* new line */
 	return string_free(asc, 0);
 }
 
-static char *readline_ui_window_print_helper(char *str, short *attr) {
-	char *ascii = readline_change_string_t_back_to_char(str, attr);
+static char *readline_ui_window_print_helper(gunichar *str, guint16 *attr) {
+	char *ascii = readline_change_fstring_t_back_to_char(str, attr);
 	char *colorful = format_string(ascii);
 
 	xfree(ascii);
